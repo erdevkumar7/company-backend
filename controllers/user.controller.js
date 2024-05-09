@@ -5,11 +5,20 @@ const {
 } = require("../helper/auth");
 const db = require("../models/index.model");
 const User = db.User;
-const Company = db.Company
-
+const Company = db.Company;
+require("dotenv").config();
+const jsonwebtoken = require("jsonwebtoken");
 // User signUp
 exports.registration = async (req, res) => {
-  const {name,mobile,address, email,company_name,company_email, password } = req.body;
+  const {
+    name,
+    mobile,
+    address,
+    email,
+    company_name,
+    company_email,
+    password,
+  } = req.body;
   // Check for email and passowrd
   if (!(password && email)) {
     res.status(401).json({ message: "Email and Password Must Required" });
@@ -33,8 +42,8 @@ exports.registration = async (req, res) => {
       const companyCreated = await Company.create({
         company_name,
         company_email,
-      })
-      res.status(201).json({userCreated,companyCreated});
+      });
+      res.status(201).json({ userCreated, companyCreated });
     }
   }
 };
@@ -53,10 +62,7 @@ exports.loginUser = async (req, res) => {
     }
 
     // Check For Password Validation
-    const validPassword = await isValidPassword(
-      password,
-      findUser.password
-    );
+    const validPassword = await isValidPassword(password, findUser.password);
 
     if (!validPassword) {
       res.status(400).json("Password Incorrect!");
@@ -66,7 +72,7 @@ exports.loginUser = async (req, res) => {
       const token = await generateToken({
         objectId: findUser._id,
         email: findUser.email,
-        role: findUser.role
+        role: findUser.role,
       });
 
       res.status(200).json({
@@ -77,3 +83,50 @@ exports.loginUser = async (req, res) => {
   }
 };
 
+// getUser by Id
+exports.getUserById = async (req, res) => {
+  const userId = req.params.id;
+  try {
+    const getUserById = await User.findById(userId);
+
+    if (getUserById) {
+      res.status(200).json(getUserById);
+    }
+    if (!getUserById) {
+      res.status(404).json("User not Found!");
+    }
+  } catch (e) {
+    res.status(400).json(e);
+  }
+};
+
+//todo: Update user
+exports.updateUser = async (req, res) => {
+  const userId = req.params.id;
+  const findUser = await User.findOne({ _id: userId });
+  if (!findUser) {
+    res.status(404).json("User not Found!");
+  }
+
+  if (findUser) {
+    const { name, mobile, address, email } = req.body;
+
+    const token = req.headers.logintoken;
+    const decode = jsonwebtoken.verify(token, process.env.SIGNING_KEY);
+    const updated_by = decode.id;
+    const checkEmail = await User.findOne({ email: email });
+    const existUser = await User.findOne({ email: email, _id: userId });
+    if (!checkEmail || existUser) {
+      const updatedUser = await User.findByIdAndUpdate(
+        userId,
+        { name, mobile, address, email },
+        { new: true }
+      );
+      return res.status(201).json(updatedUser);
+    }
+
+    if (checkEmail) {
+      return res.status(400).json("Email already Registered!");
+    }
+  }
+};
