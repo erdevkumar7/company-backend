@@ -19,16 +19,4 @@ exports.webProtection = async (req, res, next) => {
   }
 };
 
-// Check if the user has the required role
-exports.checkUserRole = (req, res, next) => {
-  try {
-    if (req.user_role !== "admin") {
-      res
-        .status(403)
-        .json({ message: "Forbidden: User does not have permission" });
-    }
-    next();
-  } catch (e) {
-    res.status(400).json(e.message);
-  }
-};
+
