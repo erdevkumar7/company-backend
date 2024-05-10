@@ -10,45 +10,57 @@ require("dotenv").config();
 const jsonwebtoken = require("jsonwebtoken");
 // User signUp
 exports.registration = async (req, res) => {
-  const {
-    name,
-    mobile,
-    address,
-    email,
-    company_name,
-    company_email,
-    password,
-  } = req.body;
-  // Check for email and passowrd
-  if (!(password && email)) {
-    res.status(401).json({ message: "Email and Password Must Required" });
-  } else {
-    // check for existing user
-    const findUser = await User.findOne({ email: email });
-    if (findUser) {
-      res.status(400).json("Email already Registered!");
+  try {
+    const {
+      name,
+      mobile,
+      address,
+      email,
+      company_name,
+      company_email,
+      password,
+    } = req.body;
+
+    // Check for email and password
+    if (!(password && email)) {
+      return res.status(401).json({ error: "Email and Password are required" });
+    }
+
+    // Check if the user already exists
+    const existingUser = await User.findOne({ email: email });
+    if (existingUser) {
+      return res.status(400).json({ error: "Email already registered" });
+    }
+
+    // Check if the company email already exists
+    const existingCompany = await Company.findOne({ company_email: company_email });
+    if (existingCompany) {
+      return res.status(400).json({ error: "Company email already registered" });
     }
 
     // Register new user
-    if (!findUser) {
-      const userCreated = await User.create({
-        name,
-        mobile,
-        address,
-        email,
-        password: await hashPassword(password), //hashing password
-      });
-      const userId = userCreated._id
-      const companyCreated = await Company.create({
-        userId,
-        company_name,
-        company_email,
-      });
-      res.status(201).json({ userCreated, companyCreated });
-    }
+    const hashedPassword = await hashPassword(password);
+    const userCreated = await User.create({
+      name,
+      mobile,
+      address,
+      email,
+      password: hashedPassword,
+    });
+
+    const userId = userCreated._id;
+    const companyCreated = await Company.create({
+      userId,
+      company_name,
+      company_email,
+    });
+
+    return res.status(201).json({ userCreated, companyCreated });
+  } catch (error) {
+    console.error("Error in registration controller:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };
-
 
 exports.loginUser = async (req, res) => {
   try {
@@ -92,8 +104,6 @@ exports.loginUser = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-
-
 
 // getUser by Id
 exports.getUserById = async (req, res) => {
