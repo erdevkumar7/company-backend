@@ -49,42 +49,6 @@ exports.registration = async (req, res) => {
   }
 };
 
-// Login the user
-// exports.loginUser = async (req, res) => {
-//   try {
-//     const { email, password } = req.body;
-//     // Check for email and password
-//     if (!(password && email)) {
-//       return res.status(401).json({ error: "Email and Password are required fields" });
-//     }
-
-//     // Check for registered User
-//     const findUser = await User.findOne({ email: email });
-//     if (!findUser) {
-//       return res.status(404).json({ error: "User not found with this Email!" });
-//     }
-
-//     // Check For Password Validation
-//     const validPassword = await isValidPassword(password, findUser.password);
-//     if (!validPassword) {
-//       return res.status(400).json({ error: "Incorrect Password!" });
-//     }
-
-//     // Generate and send token upon successful login
-//     const token = await generateToken({
-//       objectId: findUser._id,
-//       email: findUser.email,
-//     });
-
-//     res.status(200).json({
-//       userDetails: findUser,
-//       loginToken: token,
-//     });
-//   } catch (error) {
-//     console.error("Error in loginUser controller:", error);
-//     res.status(500).json({ error: "Internal Server Error" });
-//   }
-// };
 
 exports.loginUser = async (req, res) => {
   try {

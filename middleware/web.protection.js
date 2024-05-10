@@ -7,7 +7,6 @@ exports.webProtection = async (req, res, next) => {
     if (req.headers.authorization) {
       const token = req.headers.authorization.split(" ")[1];
       const decoded = jsonwebtoken.verify(token, process.env.SIGNING_KEY);
-      req.user_role = decoded.user_role;
       next();
     } else {
       res.status(400).send({
